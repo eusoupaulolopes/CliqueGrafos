@@ -4,8 +4,9 @@ from Tools import helper
 import networkx as nx
 import sys
 import time
+from networkx.algorithms.approximation import clique
 
-DIR = "samples\\"
+DIR = "samples_bkp\\"
 
 
 
@@ -25,7 +26,7 @@ def timeit(f):
 def ler_samples():
     file_content = {}
     for file in os.listdir(DIR):
-        if file.endswith( ".clq" ):
+        if file.endswith( ".col" ):
             try:    
                 file_content[file] = ler_base(os.path.join(DIR+file))
             except FileNotFoundError as e:
@@ -99,21 +100,17 @@ def cromatico_guloso(graph):
     return len(cores_usadas)
 
 def cromatico_welsh_powell(graph):
-	
     #Ordenar os vértices 
 	node_list = ordenar_nodes(graph)
-    
     # C1 = ... Cn = {}
 	col_val = {} 
     #Primeira cor ao nó de maior grau
 	col_val[node_list.pop(0)] = 0 
-	
     # Cores dos nós restantes 
     # i <- 1 até n
 	for node in node_list:
         # Estrutura para guardar cores disponiveis
 		available = [True] * len(graph.nodes()) 
-
 		#Iterando sobre os nós vizinhos
 		for adj_node in graph.neighbors(node): 
             # Se o nó já foi pintado com uma cor
@@ -127,7 +124,6 @@ def cromatico_welsh_powell(graph):
 			if available[clr] == True:
 				break
         #pinta o nó com a próxima cor disponivel
-        
         #Ck = Ck U {Xi}
 		col_val[node] = clr
 	
@@ -135,7 +131,13 @@ def cromatico_welsh_powell(graph):
 
 def clique_guloso(graph):
     """
-        Localizando uma clique através de heuristica gulosa. Trazemos uma clique com maior grau possivel no grafo proposto
+        Localizando uma clique através de heuristica gulosa. 
+        Trazemos um clique contendo o no de maior grau possivel do grafo proposto
+        1) Suponha K = {}
+        2) node_list é a lista dos nós que não estão em K, ordenados não decrescente pelos graus
+        3) Adiciona o primeiro nó de node_list v em K
+        4) remove de node_list todos os nós não vizinhos a v 
+        5) Se node_list não é vazia volte ao passo 3. Caso contrário retorne K
     """
     K = set()
     node_list = ordenar_nodes(graph)
@@ -182,7 +184,8 @@ def bb_max_clique(graph):
 
 @timeit
 def get_max_clique(graph):
-    return bb_max_clique(graph)
+    return clique.max_clique(graph)
+    #return bb_max_clique(graph)
 
 
 def main():
@@ -191,7 +194,7 @@ def main():
         graph_dict = ler_samples()
         for key, graph in graph_dict.items():
             print("\nBASE: ", key)
-            max_clq = get_max_clique(graph)
+            max_clq =  get_max_clique(graph)
             with open('results.txt', 'a+') as results:
                 results.write("#########################")
                 results.write("\nBASE: {}\n".format(key))
